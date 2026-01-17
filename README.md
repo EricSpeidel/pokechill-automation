@@ -14,6 +14,16 @@ This repo holds browser-injected automation helpers for Pokechill.
 4. While on Pokechill, click the bookmark to inject the UI.
 5. Click the checkbox to enable/disable. Running the bookmarklet again removes it.
 
+### Usage (bookmarklet, load from GitHub)
+
+You can also use a tiny loader bookmarklet that fetches the script from GitHub so you don't need to paste the whole file each time:
+
+```
+javascript:(()=>{const u="https://raw.githubusercontent.com/EricSpeidel/pokechill-automation/refs/heads/main/auto-refight-bookmarklet.js";fetch(u).then(r=>r.text()).then(t=>{(0,eval)(t);});})();
+```
+
+When you update the script in your repo, the bookmarklet will pick up the latest version automatically.
+
 ### Usage (console)
 
 Paste the contents of `auto-refight-bookmarklet.js` into the browser console while playing.
