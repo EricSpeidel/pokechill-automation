@@ -9,7 +9,7 @@
   const UI_ID = "pokechill-auto-refight";
   const state = {
     enabled: localStorage.getItem(STORAGE_KEY) === "true",
-    intervalId: null,
+    timer: null,
     observer: null,
     lastRefightAt: 0,
   };
@@ -61,6 +61,54 @@
     if (shouldRefight()) {
       triggerRefight();
     }
+  };
+
+  const createIntervalTimer = (callback, intervalMs) => {
+    const intervalId = window.setInterval(callback, intervalMs);
+    return {
+      stop: () => window.clearInterval(intervalId),
+    };
+  };
+
+  const createWorkerTimer = (callback, intervalMs) => {
+    if (!window.Worker || !window.Blob || !window.URL?.createObjectURL) {
+      return null;
+    }
+
+    const workerScript = `
+      let intervalId = null;
+      self.onmessage = (event) => {
+        const { type, interval } = event.data || {};
+        if (type === "start") {
+          clearInterval(intervalId);
+          intervalId = setInterval(() => self.postMessage({ type: "tick" }), interval);
+        }
+        if (type === "stop") {
+          clearInterval(intervalId);
+          intervalId = null;
+        }
+      };
+    `;
+
+    const blob = new Blob([workerScript], { type: "application/javascript" });
+    const url = URL.createObjectURL(blob);
+    const worker = new Worker(url);
+    URL.revokeObjectURL(url);
+
+    worker.onmessage = (event) => {
+      if (event.data?.type === "tick") {
+        callback();
+      }
+    };
+
+    worker.postMessage({ type: "start", interval: intervalMs });
+
+    return {
+      stop: () => {
+        worker.postMessage({ type: "stop" });
+        worker.terminate();
+      },
+    };
   };
 
   const updateUi = () => {
@@ -124,14 +172,19 @@
 
   const start = () => {
     ensureUi();
-    state.intervalId = window.setInterval(tick, 1000);
+    if (state.timer?.stop) {
+      state.timer.stop();
+    }
+
+    const workerTimer = createWorkerTimer(tick, 1000);
+    state.timer = workerTimer ?? createIntervalTimer(tick, 1000);
     state.observer = new MutationObserver(ensureUi);
     state.observer.observe(document.body, { childList: true, subtree: true });
   };
 
   const cleanup = () => {
-    if (state.intervalId) {
-      window.clearInterval(state.intervalId);
+    if (state.timer?.stop) {
+      state.timer.stop();
     }
 
     if (state.observer) {

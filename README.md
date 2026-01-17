@@ -4,7 +4,7 @@ This repo holds browser-injected automation helpers for Pokechill.
 
 ## Auto-refight (manual click)
 
-`auto-refight-bookmarklet.js` injects a checkbox into the combat UI. When enabled, it waits for the battle-end screen and triggers the normal **Fight Again** button (`#area-rejoin`). It does **not** use the paid auto-refight feature.
+`auto-refight-bookmarklet.js` injects a checkbox into the combat UI. When enabled, it waits for the battle-end screen and triggers the normal **Fight Again** button (`#area-rejoin`). It does **not** use the paid auto-refight feature. The timer uses a Web Worker when possible to reduce background-tab throttling.
 
 ### Usage (bookmarklet)
 
